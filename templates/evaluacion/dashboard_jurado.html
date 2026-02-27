@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block navbar_title %}Dashboard del Jurado{% endblock %}
+
+{% block title %}Dashboard Jurado{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Columna de Pendientes -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm dashboard-card">
+            <div class="card-header">
+                <h3>Pendientes de Evaluar</h3>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for emprendedora in pendientes %}
+                        <a href="{% url 'evaluacion:votar' emprendedora.id %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3">
+                            <div>
+                                <h6 class="mb-1">{{ emprendedora.nombre_emprendimiento }}</h6>
+                                <small class="text-muted">{{ emprendedora.nombre_completo }}</small>
+                            </div>
+                            <span class="badge bg-primary rounded-pill">Evaluar</span>
+                        </a>
+                    {% empty %}
+                        <div class="list-group-item text-center text-muted py-5">
+                            <p class="mb-0">¡Felicidades! Has evaluado a todas las candidatas.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% if pendientes.has_other_pages %}<div class="card-footer bg-white py-2">{% include 'partials/pagination.html' with page_obj=pendientes page_param='page_pendientes' %}</div>{% endif %}
+        </div>
+    </div>
+
+    <!-- Columna de Evaluadas -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm dashboard-card">
+            <div class="card-header">
+                <h3>Ya Evaluadas</h3>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for emprendedora in evaluadas %}
+                        <a href="{% url 'evaluacion:votar' emprendedora.id %}" class="list-group-item list-group-item-action list-group-item-light d-flex justify-content-between align-items-center py-3">
+                            <div>
+                                <h6 class="mb-1">{{ emprendedora.nombre_emprendimiento }}</h6>
+                                <small class="text-muted">{{ emprendedora.nombre_completo }}</small>
+                            </div>
+                            <span class="badge bg-secondary rounded-pill">Editar Evaluación</span>
+                        </a>
+                    {% empty %}
+                        <div class="list-group-item text-center text-muted py-5">
+                            <p class="mb-0">Aún no has evaluado a ninguna candidata.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% if evaluadas.has_other_pages %}<div class="card-footer bg-white py-2">{% include 'partials/pagination.html' with page_obj=evaluadas page_param='page_evaluadas' %}</div>{% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

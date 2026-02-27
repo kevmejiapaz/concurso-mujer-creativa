@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block navbar_title %}Auditoría de Evaluaciones{% endblock %}
+
+{% block title %}Auditoría de Evaluaciones{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-end pt-3 pb-2 mb-3">
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'home' %}" class="btn btn-sm btn-outline-secondary">
+            &laquo; Volver al Ranking
+        </a>
+    </div>
+</div>
+
+<p class="lead">Esta tabla muestra el estado de evaluación de cada emprendedora por cada miembro del jurado.</p>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" style="font-size: 0.9rem; min-width: 800px;">
+                <thead class="table-custom text-center align-middle">
+                    <tr>
+                        <th scope="col" style="min-width: 250px;">Emprendedora</th>
+                        {% for jurado in jurados %}
+                        <th scope="col" style="min-width: 120px;">{{ jurado.get_full_name|default:jurado.username }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in audit_data %}
+                    <tr>
+                        <td class="fw-bold">
+                            {{ row.emprendedora.nombre_emprendimiento }}<br>
+                            <small class="text-muted">{{ row.emprendedora.nombre_completo }}</small>
+                        </td>
+                        {% for score in row.status_por_jurado %}
+                        <td class="text-center align-middle">
+                            {% if score is not None %}
+                                <span class="badge bg-success rounded-pill fs-6">{{ score }}</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark rounded-pill">Pendiente</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="{{ jurados|length|add:1 }}" class="text-center">No hay emprendedoras registradas.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

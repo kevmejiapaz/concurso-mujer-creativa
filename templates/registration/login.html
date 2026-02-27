@@ -1,0 +1,48 @@
+{% extends 'base_fullscreen.html' %}
+{% load static %}
+
+{% block title %}Iniciar Sesión{% endblock %}
+
+{% block body_class %}body-login{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="row justify-content-center w-100">
+        <div class="col-11 col-sm-8 col-md-6 col-lg-5 col-xl-4">
+            <div class="card shadow-lg">
+                <div class="card-body p-4 p-sm-5 text-center">
+                    
+                    <!-- Logo: Asegúrate de que la ruta a tu logo sea correcta -->
+                    <img src="{% static 'img/logo.png' %}" alt="Logo Concurso Mujer Creativa" class="login-logo">
+
+                    <h2 class="card-title mb-4">Iniciar Sesión</h2>
+                    
+                    {% if form.errors %}
+                        <div class="alert alert-danger" role="alert">
+                            Tu nombre de usuario y contraseña no coinciden. Por favor, inténtalo de nuevo.
+                        </div>
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ next }}">
+                        
+                        <div class="form-floating mb-3">
+                            <input type="text" name="username" class="form-control" id="id_username" placeholder="Nombre de usuario" autofocus autocapitalize="none" autocomplete="username" maxlength="150" required>
+                            <label for="id_username">Nombre de usuario</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="password" name="password" class="form-control" id="id_password" placeholder="Contraseña" autocomplete="current-password" required>
+                            <label for="id_password">Contraseña</label>
+                        </div>
+
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">Ingresar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

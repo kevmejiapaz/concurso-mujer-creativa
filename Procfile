@@ -1,0 +1,1 @@
+web: gunicorn concurso_project.wsgi --log-file -

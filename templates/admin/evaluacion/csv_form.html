@@ -1,0 +1,15 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<div>
+    <h1>{% trans "Importar Emprendedoras desde CSV" %}</h1>
+    <p>{% trans "Seleccione el archivo CSV exportado desde Google Forms. El sistema procesará los datos, creará o actualizará los registros de las emprendedoras." %}</p>
+    
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <input type="submit" value="{% trans 'Importar Archivo' %}" class="default">
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+# Archivos de entorno
+.env
+
+# Entorno virtual de Python
+venv/
+
+# Base de datos de desarrollo
+db.sqlite3
+*.sqlite3
+
+# Archivos de caché de Python
+__pycache__/
+*.pyc
+
+# Archivos de medios subidos por los usuarios
+/media/
+
+# Archivos estáticos recolectados para producción
+/staticfiles/
+
+# Carpetas de configuración de IDEs
+.idea/
+.vscode/
+
+# Archivos de sistema operativo
+.DS_Store
+Thumbs.db

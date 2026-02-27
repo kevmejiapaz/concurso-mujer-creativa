@@ -1,0 +1,12 @@
+[Unit]
+Description=gunicorn daemon for concurso_project
+After=network.target
+
+[Service]
+User=tu_usuario_ubuntu
+Group=www-data
+WorkingDirectory=/home/tu_usuario_ubuntu/concursoMujer
+ExecStart=/home/tu_usuario_ubuntu/concursoMujer/venv/bin/gunicorn --access-logfile - --workers 3 --bind unix:/run/gunicorn.sock concurso_project.wsgi:application
+
+[Install]
+WantedBy=multi-user.target
