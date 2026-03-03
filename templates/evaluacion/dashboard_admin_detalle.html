@@ -23,7 +23,8 @@
                     <tr>
                         <th scope="col" style="min-width: 250px;">Emprendedora</th>
                         {% for jurado in jurados %}
-                        <th scope="col" style="min-width: 120px;">{{ jurado.get_full_name|default:jurado.username }}</th>
+                        <th scope="col" style="min-width: 120px;">{{ jurado.get_full_name|default:jurado.username }}
+                        </th>
                         {% endfor %}
                     </tr>
                 </thead>
@@ -37,16 +38,24 @@
                         {% for score in row.status_por_jurado %}
                         <td class="text-center align-middle">
                             {% if score is not None %}
-                                <span class="badge bg-success rounded-pill fs-6">{{ score }}</span>
+                            <div class="d-flex flex-column gap-1">
+                                <span class="badge bg-info text-dark" style="font-size: 0.75rem;">F1: {{
+                                    score.f1|floatformat:0 }}</span>
+                                <span class="badge bg-primary" style="font-size: 0.75rem;">P: {{ score.p|floatformat:0
+                                    }}</span>
+                                <span class="badge bg-success" style="font-size: 0.85rem;">Total: {{
+                                    score.t|floatformat:1 }}</span>
+                            </div>
                             {% else %}
-                                <span class="badge bg-warning text-dark rounded-pill">Pendiente</span>
+                            <span class="badge bg-warning text-dark rounded-pill">Pendiente</span>
                             {% endif %}
                         </td>
                         {% endfor %}
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="{{ jurados|length|add:1 }}" class="text-center">No hay emprendedoras registradas.</td>
+                        <td colspan="{{ jurados|length|add:1 }}" class="text-center">No hay emprendedoras registradas.
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>

@@ -29,5 +29,10 @@ urlpatterns = [
     path('evaluacion/', include('evaluacion.urls')),
 ]
 
+# Personalización del Admin
+admin.site.site_header = "Concurso Mujer Creativa 2026"
+admin.site.site_title = "Panel de Administración"
+admin.site.index_title = "Gestión del Concurso"
+
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

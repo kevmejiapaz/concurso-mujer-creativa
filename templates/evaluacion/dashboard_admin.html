@@ -23,7 +23,9 @@
                         <th scope="col">Emprendedora</th>
                         <th scope="col">Emprendimiento</th>
                         <th scope="col">Categoría</th>
-                        <th scope="col">Puntaje Promedio</th>
+                        <th scope="col">Fase 1 (60%)</th>
+                        <th scope="col">Pitch (40%)</th>
+                        <th scope="col">Total Ponderado</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -33,7 +35,9 @@
                         <td>{{ item.nombre_completo }}</td>
                         <td>{{ item.nombre_emprendimiento }}</td>
                         <td>{{ item.categoria }}</td>
-                        <td><strong>{{ item.promedio_score|floatformat:2 }}</strong></td>
+                        <td>{{ item.promedio_fase1|floatformat:2 }}</td>
+                        <td>{{ item.promedio_pitch|floatformat:2 }}</td>
+                        <td><strong>{{ item.promedio_total|floatformat:2 }}</strong></td>
                     </tr>
                     {% empty %}
                     <tr>

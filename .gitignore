@@ -18,6 +18,13 @@ __pycache__/
 # Archivos estáticos recolectados para producción
 /staticfiles/
 
+# Logs
+django_error.log
+*.log
+
+# Datos temporales
+data.json
+
 # Carpetas de configuración de IDEs
 .idea/
 .vscode/

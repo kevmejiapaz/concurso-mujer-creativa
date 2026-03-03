@@ -49,8 +49,10 @@ def home(request):
     if user.is_superuser or user.groups.filter(name='Administrador').exists():
         # Lógica para el dashboard del admin: Ranking general
         ranking = Emprendedora.objects.annotate(
-            promedio_score=Avg('evaluaciones__total_score')
-        ).filter(promedio_score__isnull=False).order_by('-promedio_score')
+            promedio_fase1=Avg('evaluaciones__score_fase1'),
+            promedio_pitch=Avg('evaluaciones__score_pitch'),
+            promedio_total=Avg('evaluaciones__total_score')
+        ).filter(promedio_total__isnull=False).order_by('-promedio_total')
         
         context = {'ranking': ranking}
         return render(request, 'evaluacion/dashboard_admin.html', context)
@@ -96,16 +98,22 @@ def dashboard_admin_detalle(request):
 
     audit_data = []
     for emprendedora in emprendedoras:
-        # Un diccionario para mapear jurado_id -> score
-        evaluaciones_hechas = {ev.jurado.id: ev.total_score for ev in emprendedora.evaluaciones.all()}
+        # Un diccionario para mapear jurado_id -> Scores (Fase 1, Pitch, Total)
+        evaluaciones_hechas = {
+            ev.jurado.id: {
+                'f1': ev.score_fase1,
+                'p': ev.score_pitch,
+                't': ev.total_score
+            } for ev in emprendedora.evaluaciones.all()
+        }
         
         status_row = {
             'emprendedora': emprendedora,
             'status_por_jurado': []
         }
         for jurado in jurados:
-            score = evaluaciones_hechas.get(jurado.id)
-            status_row['status_por_jurado'].append(score) # Appends score or None
+            scores = evaluaciones_hechas.get(jurado.id)
+            status_row['status_por_jurado'].append(scores) # Appends dict or None
         
         audit_data.append(status_row)
 

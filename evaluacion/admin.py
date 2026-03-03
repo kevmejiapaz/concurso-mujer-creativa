@@ -210,16 +210,105 @@ class EvaluacionAdmin(admin.ModelAdmin):
     Configuración del admin para el modelo Evaluacion.
     Facilita la revisión de las calificaciones.
     """
-    list_display = ('emprendedora', 'jurado', 'total_score', 'fecha_evaluacion')
+    change_list_template = "admin/evaluacion/evaluacion/change_list.html"
+    list_display = ('emprendedora', 'jurado', 'score_fase1', 'score_pitch', 'total_score', 'fecha_evaluacion')
     list_filter = ('jurado', 'emprendedora__categoria')
     search_fields = ('emprendedora__nombre_completo', 'jurado__username')
+    actions = ['export_as_csv']
     
     # Hacemos que los campos calculados y de fecha sean de solo lectura
-    readonly_fields = ('total_score', 'fecha_evaluacion')
+    readonly_fields = ('score_fase1', 'total_score', 'fecha_evaluacion')
 
-    # Esto es útil para que los jurados no puedan cambiar a quién están evaluando
-    # una vez que se ha creado el registro.
-    # def get_readonly_fields(self, request, obj=None):
-    #     if obj: # Si el objeto ya existe
-    #         return self.readonly_fields + ('jurado', 'emprendedora')
-    #     return self.readonly_fields
+    def export_as_csv(self, request, queryset):
+        import csv
+        from django.http import HttpResponse
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="reporte_evaluaciones.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow([
+            'Jurado', 'Emprendedora', 'Categoría', 
+            'Fase 1 (60%)', 'Pitch (40%)', 'Total Ponderado',
+            'Fecha'
+        ])
+        
+        for ev in queryset.select_related('jurado', 'emprendedora__categoria'):
+            writer.writerow([
+                ev.jurado.username,
+                ev.emprendedora.nombre_completo,
+                ev.emprendedora.categoria.get_nombre_display(),
+                ev.score_fase1,
+                ev.score_pitch,
+                ev.total_score,
+                ev.fecha_evaluacion.strftime('%Y-%m-%d %H:%M')
+            ])
+            
+        return response
+    export_as_csv.short_description = "Exportar seleccionados a CSV"
+
+    def get_urls(self):
+        urls = super().get_urls()
+        my_urls = [
+            path('import-evaluaciones/', self.import_evaluaciones, name='import_evaluaciones'),
+        ]
+        return my_urls + urls
+
+    def import_evaluaciones(self, request):
+        if request.method == "POST":
+            form = CSVImportForm(request.POST, request.FILES)
+            if form.is_valid():
+                csv_file = request.FILES["csv_file"]
+                decoded_file = io.TextIOWrapper(csv_file.file, 'utf-8')
+                reader = csv.DictReader(decoded_file)
+                
+                creados, actualizados, errores = 0, 0, []
+                
+                try:
+                    with transaction.atomic():
+                        for i, row in enumerate(reader, 1):
+                            jurado_val = row.get('jurado', '').strip()
+                            emp_email = row.get('emprendedora_email', '').strip().lower()
+                            
+                            # Buscar Jurado (por username o email)
+                            jurado = User.objects.filter(username=jurado_val).first() or \
+                                     User.objects.filter(email=jurado_val).first()
+                            
+                            # Buscar Emprendedora
+                            emprendedora = Emprendedora.objects.filter(email=emp_email).first()
+                            
+                            if not jurado or not emprendedora:
+                                errores.append(f"Fila {i}: Jurado '{jurado_val}' o Emprendedora '{emp_email}' no encontrados.")
+                                continue
+                            
+                            # Extraer notas
+                            def get_score(key, default=0):
+                                val = row.get(key, '0').strip()
+                                try: return int(float(val))
+                                except: return default
+
+                            eval_obj, created = Evaluacion.objects.update_or_create(
+                                jurado=jurado,
+                                emprendedora=emprendedora,
+                                defaults={
+                                    'score_coherencia': get_score('coherencia'),
+                                    'score_trayectoria': get_score('trayectoria'),
+                                    'score_impacto': get_score('impacto'),
+                                    'score_creatividad': get_score('creatividad'),
+                                    'score_viabilidad': get_score('viabilidad'),
+                                    'score_inversion': get_score('inversion'),
+                                    'score_presentacion': get_score('presentacion'),
+                                }
+                            )
+                            if created: creados += 1
+                            else: actualizados += 1
+                            
+                    self.message_user(request, f"Importación exitosa: {creados} creados, {actualizados} actualizados.", level='success')
+                    for err in errores: self.message_user(request, err, level='error')
+                    return redirect("..")
+                except Exception as e:
+                    self.message_user(request, f"Error en la importación: {e}", level='error')
+                    return redirect(".")
+                    
+        form = CSVImportForm()
+        return render(request, "admin/evaluacion/evaluacion_import_form.html", {"form": form})

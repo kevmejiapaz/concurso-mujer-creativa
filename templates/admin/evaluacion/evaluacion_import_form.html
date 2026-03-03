@@ -1,0 +1,23 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<div>
+    <h1>{% trans "Importar Evaluaciones desde CSV" %}</h1>
+    <p>{% trans "Seleccione el archivo CSV con las notas de la Fase 1 recopiladas en Google Sheets." %}</p>
+    <div style="background: #f8f9fa; padding: 15px; border-left: 5px solid #0d6efd; margin-bottom: 20px;">
+        <strong>Formato de CSV sugerido (Cabeceras):</strong><br>
+        <code>jurado, emprendedora_email, coherencia, trayectoria, impacto, creatividad, viabilidad, inversion, presentacion</code>
+    </div>
+
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <input type="submit" value="{% trans 'Ejecutar Importación' %}" class="default">
+    </form>
+
+    <div style="margin-top: 20px;">
+        <a href=".." class="button">{% trans "Volver" %}</a>
+    </div>
+</div>
+{% endblock %}

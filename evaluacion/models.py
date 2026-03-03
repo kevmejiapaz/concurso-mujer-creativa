@@ -129,10 +129,15 @@ class Evaluacion(models.Model):
     score_creatividad = models.PositiveIntegerField(default=0, validators=[MaxValueValidator(15)], verbose_name="4. Nivel de Innovación/Creatividad")
     score_viabilidad = models.PositiveIntegerField(default=0, validators=[MaxValueValidator(15)], verbose_name="5. Proyección y Estabilidad")
     score_inversion = models.PositiveIntegerField(default=0, validators=[MaxValueValidator(20)], verbose_name="6. Intención de Uso del Premio")
-    score_presentacion = models.PositiveIntegerField(default=0, validators=[MaxValueValidator(10)], verbose_name="7. Claridad en Carta/Pitch")
+    score_presentacion = models.PositiveIntegerField(default=0, validators=[MaxValueValidator(10)], verbose_name="7. Claridad en Carta de Interés")
+    
+    # Segunda Fase: Pitch (40%)
+    score_pitch = models.PositiveIntegerField(default=0, validators=[MaxValueValidator(100)], verbose_name="8. Calificación Pitch Final (0-100)")
 
     observaciones = models.TextField(blank=True, null=True, verbose_name="Observaciones Adicionales")
-    total_score = models.PositiveIntegerField(default=0, editable=False, verbose_name="Puntaje Total")
+    
+    score_fase1 = models.DecimalField(max_digits=5, decimal_places=2, default=0, editable=False, verbose_name="Puntaje Fase 1 (60%)")
+    total_score = models.DecimalField(max_digits=5, decimal_places=2, default=0, editable=False, verbose_name="Puntaje Final Ponderado")
 
     class Meta:
         verbose_name = "Evaluación"
@@ -144,11 +149,17 @@ class Evaluacion(models.Model):
         return f"Evaluación de {self.emprendedora.nombre_completo} por {self.jurado.username}"
 
     def save(self, *args, **kwargs):
-        # Calcula el puntaje total antes de guardar
-        self.total_score = (
+        # Calcula el puntaje de la Fase 1 (sobre 100)
+        fase1_sum = (
             self.score_coherencia + self.score_trayectoria +
             self.score_impacto + self.score_creatividad +
             self.score_viabilidad + self.score_inversion +
             self.score_presentacion
         )
+        self.score_fase1 = fase1_sum
+        
+        # Calcula el puntaje total ponderado: 60% Fase 1 + 40% Pitch
+        # Nota: score_pitch también es sobre 100
+        self.total_score = (float(fase1_sum) * 0.6) + (float(self.score_pitch) * 0.4)
+        
         super().save(*args, **kwargs)

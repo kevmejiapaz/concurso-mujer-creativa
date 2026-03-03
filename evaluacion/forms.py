@@ -37,6 +37,7 @@ class EvaluacionForm(forms.ModelForm):
             'score_viabilidad',
             'score_inversion',
             'score_presentacion',
+            'score_pitch',
             'observaciones',
         ]
         # Aplicamos clases de Bootstrap 5 a los widgets del formulario
@@ -48,5 +49,6 @@ class EvaluacionForm(forms.ModelForm):
             'score_viabilidad': forms.NumberInput(attrs={'class': 'form-control'}),
             'score_inversion': forms.NumberInput(attrs={'class': 'form-control'}),
             'score_presentacion': forms.NumberInput(attrs={'class': 'form-control'}),
+            'score_pitch': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Puntaje de 0 a 100'}),
             'observaciones': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
         }
