@@ -1,66 +1,163 @@
 {% extends 'base.html' %}
 
-{% block navbar_title %}Auditoría de Evaluaciones{% endblock %}
+{% block navbar_title %}Panel de Auditoría Avanzada{% endblock %}
 
 {% block title %}Auditoría de Evaluaciones{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-end pt-3 pb-2 mb-3">
-    <div class="btn-toolbar mb-2 mb-md-0">
-        <a href="{% url 'home' %}" class="btn btn-sm btn-outline-secondary">
-            &laquo; Volver al Ranking
-        </a>
+<div class="container-fluid">
+    <div class="row mb-4 align-items-center">
+        <div class="col">
+            <h1 class="h3 text-primary mb-0">Control de Calificaciones</h1>
+            <p class="text-muted">Vista matricial con promedios generales y estado de avance por jurado.</p>
+        </div>
+        <div class="col-auto">
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i>🔍</span>
+                <input type="text" id="searchInput" class="form-control border-start-0"
+                    placeholder="Buscar emprendedora o categoría...">
+            </div>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+                &laquo; Regresar al Ranking
+            </a>
+        </div>
     </div>
-</div>
 
-<p class="lead">Esta tabla muestra el estado de evaluación de cada emprendedora por cada miembro del jurado.</p>
+    <!-- Stats Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-primary text-white p-3">
+                <div class="small">Total Emprendedoras</div>
+                <div class="h4 mb-0">{{ audit_data|length }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-success text-white p-3">
+                <div class="small">Total Jurados</div>
+                <div class="h4 mb-0">{{ jurados_count }}</div>
+            </div>
+        </div>
+    </div>
 
-<div class="card shadow-sm">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-bordered table-hover" style="font-size: 0.9rem; min-width: 800px;">
-                <thead class="table-custom text-center align-middle">
-                    <tr>
-                        <th scope="col" style="min-width: 250px;">Emprendedora</th>
-                        {% for jurado in jurados %}
-                        <th scope="col" style="min-width: 120px;">{{ jurado.get_full_name|default:jurado.username }}
-                        </th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in audit_data %}
-                    <tr>
-                        <td class="fw-bold">
-                            {{ row.emprendedora.nombre_emprendimiento }}<br>
-                            <small class="text-muted">{{ row.emprendedora.nombre_completo }}</small>
-                        </td>
-                        {% for score in row.status_por_jurado %}
-                        <td class="text-center align-middle">
-                            {% if score is not None %}
-                            <div class="d-flex flex-column gap-1">
-                                <span class="badge bg-info text-dark" style="font-size: 0.75rem;">F1: {{
-                                    score.f1|floatformat:0 }}</span>
-                                <span class="badge bg-primary" style="font-size: 0.75rem;">P: {{ score.p|floatformat:0
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive" style="max-height: 70vh; overflow-y: auto;">
+                <table class="table table-hover align-middle mb-0" id="auditTable">
+                    <thead class="sticky-top bg-light shadow-sm" style="z-index: 10;">
+                        <tr>
+                            <th class="px-4 py-3" style="min-width: 300px;">Emprendimiento / Candidata</th>
+                            <th class="text-center py-3">Avance</th>
+                            {% for jurado in jurados %}
+                            <th class="text-center py-3" style="min-width: 140px;">
+                                <div class="small text-muted mb-1">Jurado</div>
+                                <div class="fw-bold">{{ jurado.get_full_name|default:jurado.username }}</div>
+                            </th>
+                            {% endfor %}
+                            <th class="bg-dark text-white text-center py-3" style="min-width: 140px;">PROMEDIO GENERAL
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in audit_data %}
+                        <tr class="audit-row"
+                            data-search="{{ row.emprendedora.nombre_emprendimiento }} {{ row.emprendedora.nombre_completo }} {{ row.emprendedora.categoria }}">
+                            <td class="px-4">
+                                <div class="fw-bold text-dark">{{ row.emprendedora.nombre_emprendimiento }}</div>
+                                <div class="small text-muted">{{ row.emprendedora.nombre_completo }}</div>
+                                <span class="badge bg-light text-dark border mt-1">{{ row.emprendedora.categoria
                                     }}</span>
-                                <span class="badge bg-success" style="font-size: 0.85rem;">Total: {{
-                                    score.t|floatformat:1 }}</span>
-                            </div>
-                            {% else %}
-                            <span class="badge bg-warning text-dark rounded-pill">Pendiente</span>
-                            {% endif %}
-                        </td>
+                            </td>
+                            <td class="text-center">
+                                <span
+                                    class="badge {% if row.completado %}bg-success{% else %}bg-warning text-dark{% endif %} rounded-pill">
+                                    {{ row.avance }}
+                                </span>
+                            </td>
+                            {% for score in row.status_por_jurado %}
+                            <td class="text-center">
+                                {% if score %}
+                                <div
+                                    class="p-2 rounded bg-opacity-10 {% if score.t > 80 %}bg-success{% elif score.t > 60 %}bg-primary{% else %}bg-warning{% endif %}">
+                                    <div class="d-flex justify-content-between mb-1" style="font-size: 0.7rem;">
+                                        <span>F1: <strong>{{ score.f1|floatformat:0 }}</strong></span>
+                                        <span>P: <strong>{{ score.p|floatformat:0 }}</strong></span>
+                                    </div>
+                                    <div class="h6 mb-0 fw-bold">{{ score.t|floatformat:1 }}</div>
+                                    {% if score.obs %}
+                                    <span class="text-muted d-block" style="font-size: 0.65rem;"
+                                        title="{{ score.obs }}">📝 con obs.</span>
+                                    {% endif %}
+                                </div>
+                                {% else %}
+                                <div class="py-3 text-muted border border-dashed rounded"
+                                    style="border-style: dashed !important; opacity: 0.6;">
+                                    <small>---</small>
+                                </div>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                            <td class="bg-dark bg-opacity-10 text-center ">
+                                <div class="p-2">
+                                    <div class="small text-muted" style="font-size: 0.7rem;">Final (Prom)</div>
+                                    <div class="h5 mb-0 fw-bold text-dark">{{
+                                        row.emprendedora.avg_t|floatformat:2|default:"0.00" }}</div>
+                                    <div class="mt-1"
+                                        style="height: 4px; border-radius: 2px; background: #eee; width: 80%; margin: 0 auto;">
+                                        <div
+                                            style="height: 100%; border-radius: 2px; width: {{ row.emprendedora.avg_t|default:0 }}%; background: var(--bs-primary);">
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="{{ jurados|length|add:3 }}" class="text-center py-5 text-muted">
+                                No hay emprendedoras registradas o aún no hay evaluaciones.
+                            </td>
+                        </tr>
                         {% endfor %}
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="{{ jurados|length|add:1 }}" class="text-center">No hay emprendedoras registradas.
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+    // Filtro de búsqueda ultrarrápido con JS
+    document.getElementById('searchInput').addEventListener('keyup', function () {
+        let val = this.value.toLowerCase();
+        document.querySelectorAll('.audit-row').forEach(row => {
+            let text = row.getAttribute('data-search').toLowerCase();
+            row.style.display = text.includes(val) ? '' : 'none';
+        });
+    });
+</script>
+
+<style>
+    .table-responsive::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 10px;
+    }
+
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(var(--bs-primary-rgb), 0.03);
+    }
+
+    .sticky-top {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+</style>
 {% endblock %}

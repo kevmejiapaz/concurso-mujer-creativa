@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.auth.models import User
 from django.utils.html import format_html
 from django.urls import path
 from django.shortcuts import render, redirect
@@ -259,7 +260,8 @@ class EvaluacionAdmin(admin.ModelAdmin):
             form = CSVImportForm(request.POST, request.FILES)
             if form.is_valid():
                 csv_file = request.FILES["csv_file"]
-                decoded_file = io.TextIOWrapper(csv_file.file, 'utf-8')
+                # Usamos utf-8-sig para manejar automáticamente el BOM si existe
+                decoded_file = io.TextIOWrapper(csv_file.file, 'utf-8-sig')
                 reader = csv.DictReader(decoded_file)
                 
                 creados, actualizados, errores = 0, 0, []
@@ -267,8 +269,15 @@ class EvaluacionAdmin(admin.ModelAdmin):
                 try:
                     with transaction.atomic():
                         for i, row in enumerate(reader, 1):
-                            jurado_val = row.get('jurado', '').strip()
-                            emp_email = row.get('emprendedora_email', '').strip().lower()
+                            # Limpiar los nombres de las columnas para que no fallen por espacios o mayúsculas
+                            row_clean = {k.strip().lower(): v for k, v in row.items()}
+                            
+                            jurado_val = row_clean.get('jurado', '').strip()
+                            emp_email = row_clean.get('emprendedora_email', '').strip().lower()
+                            
+                            if not jurado_val:
+                                errores.append(f"Fila {i}: Falta nombre del Jurado.")
+                                continue
                             
                             # Buscar Jurado (por username o email)
                             jurado = User.objects.filter(username=jurado_val).first() or \
@@ -277,13 +286,16 @@ class EvaluacionAdmin(admin.ModelAdmin):
                             # Buscar Emprendedora
                             emprendedora = Emprendedora.objects.filter(email=emp_email).first()
                             
-                            if not jurado or not emprendedora:
-                                errores.append(f"Fila {i}: Jurado '{jurado_val}' o Emprendedora '{emp_email}' no encontrados.")
+                            if not jurado:
+                                errores.append(f"Fila {i}: Jurado '{jurado_val}' no encontrado.")
+                                continue
+                            if not emprendedora:
+                                errores.append(f"Fila {i}: Emprendedora con email '{emp_email}' no encontrada.")
                                 continue
                             
                             # Extraer notas
                             def get_score(key, default=0):
-                                val = row.get(key, '0').strip()
+                                val = row_clean.get(key, '0').strip()
                                 try: return int(float(val))
                                 except: return default
 
@@ -303,11 +315,11 @@ class EvaluacionAdmin(admin.ModelAdmin):
                             if created: creados += 1
                             else: actualizados += 1
                             
-                    self.message_user(request, f"Importación exitosa: {creados} creados, {actualizados} actualizados.", level='success')
+                    self.message_user(request, f"Importación finalizada: {creados} creados, {actualizados} actualizados.", level='success')
                     for err in errores: self.message_user(request, err, level='error')
                     return redirect("..")
                 except Exception as e:
-                    self.message_user(request, f"Error en la importación: {e}", level='error')
+                    self.message_user(request, f"Error crítico en la importación: {e}", level='error')
                     return redirect(".")
                     
         form = CSVImportForm()
